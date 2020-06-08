@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<script>
+    //Variables to be changed to suit the graph
+    var x_data;
+    var y_data;
+    var stringSplitXData;
+    var actual_x_data = [];
+    var stringSplitYData;
+    var actual_y_data = [];
+    var stopped = true;
+    function change() {
+        stopped = false;
+    }
+</script>
+<h1> OSA APP </h1>
+<form id = "graphStateChange" action = "updateState/" method = "post">
+    <button type = "submit" name = "dataGraph" value = "start" class="btn btn-success"> START </button>
+    <button type = "submit" name = "dataGraph" value = "single" class="btn btn-warning"> SINGLE </button>
+    <button type = "submit" id = "stopButton" value = "stop" class="btn btn-danger"> STOP </button>
+</form>
+<!-- Current state -->
+{% if states.state == "R" %}
+    <h2> Current State: RUN </h2>
+{% endif %}
+
+{% if states.state == "I" or states.state == "RO" %}
+    <h2> Current State: IDLE </h2>
+{% endif %}
+<!-- Graph -->
+<form id = "graphForm" method = 'post' action = 'displayGraph/'>
+    {% csrf_token %}
+</form>
+<div id ="traceGraph"> </div>
+
+<!-- Instrument Response -->
+<h2> Instrument Response: </h2>
+        <textarea class="form-control mb-2 mr-sm-2" style = "height: 200px; max-height: 1000px; width: 300px;" disabled> {{commands.instrumentResponse}}</textarea>
+
+<!-- Input box for Commands-->
+<div class = "row">
+    <div class = "col">
+        <form id = "textCommand" method = 'POST' action = 'api/'>
+            {% csrf_token %}
+            <h2> Command: </h2>
+            <input name = "content" id = "content" type = "text" class = "form-control mb-2 mr-sm-2" placeholder="type command here (ex: IDN, ECHO...)"> 
+            <button type = "submit"> Submit </button>
+        </form>
+    </div>
+</div>
+<!-- Last Inputted Command -->
+<div class = "row">
+    <div class="col">
+        <h2> Last Command Entered: </h2>
+        <div class="form-control mb-2 mr-sm-2"> {{commands.command}} </div>
+    </div>
+</div>
+<script>
+    //Layout for the graph, only defined once 
+        var layout = {
+                title: {
+                    text:'OSA Trace',
+                    font: {
+                    family: 'Arial, monospace',
+                    size: 24
+                    },
+                    xref: 'paper',
+                    x: 0.05,
+                },
+                xaxis: {
+                    title: {
+                    text: 'Wavelength (M)',
+                    font: {
+                        family: 'Arial, monospace',
+                        size: 18,
+                        color: 'black'
+                    }
+                    },
+                },
+                yaxis: {
+                    title: {
+                    text: 'Signal (DBM)',
+                    font: {
+                        family: 'Arial, monospace',
+                        size: 18,
+                        color: 'black'
+                    }
+                    }
+                }
+                };
+    </script>
+{% if states.state == "R" %}
+    <script type="text/javascript">
+            //Plot the graph 
+            x_data = "{{xdata}}";
+            y_data = "{{ydata}}";
+            x_data = x_data.replace("[","");
+            x_data = x_data.replace("]","");
+            stringSplitXData = x_data.split(",");
+            actual_x_data = [];
+            y_data = y_data.replace("[","");
+            y_data = y_data.replace("]","");
+            stringSplitYData = y_data.split(",");
+            actual_y_data = [];
+            var i;
+            for(i = 0; i < stringSplitXData.length; i++){
+                actual_x_data.push(parseFloat(stringSplitXData[i]));
+                actual_y_data.push(parseFloat(stringSplitYData[i]));
+            }
+            Plotly.plot('traceGraph',[{
+                x:actual_x_data,
+                y:actual_y_data,
+                type:'line'
+            }], layout);
+
+            //Refreshes page every 3 seconds (decided to make the refresh rate 0.5 Hz instead of 1 Hz to improve user experience)
+            function submitForm() {
+                document.getElementById("graphForm").submit();
+            }
+            window.onload=function(){
+                setTimeout(submitForm(),3000);
+            }
+
+            //AJAX Code for updating the graph, updates at a 1hz refresh rate (COULD NOT USE because graph data did not properly update, but the AJAX call itself worked)
+            /*$(document).ready(function(){
+                $('#graphForm').submit(ajax);
+            })
+
+            //AJAX code
+            function ajax(){
+                $.ajax({
+                    type:'POST',
+                    url:'displayGraph/',
+                    data: {
+                        csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+                    },
+                    success:function(){
+                        x_data = "{{xdata}}";
+                        y_data = "{{ydata}}";
+                        x_data = x_data.replace("[","");
+                        x_data = x_data.replace("]","");
+                        stringSplitXData = x_data.split(",");
+                        actual_x_data = [];
+                        y_data = y_data.replace("[","");
+                        y_data = y_data.replace("]","");
+                        stringSplitYData = y_data.split(",");
+                        actual_y_data = [];
+                        var i;
+                        for(i = 0; i < stringSplitXData.length; i++){
+                            actual_x_data.push(parseFloat(stringSplitXData[i]));
+                            actual_y_data.push(parseFloat(stringSplitYData[i]));
+                        }
+                        Plotly.plot('traceGraph',[{
+                            x:actual_x_data,
+                            y:actual_y_data,
+                            type:'line'
+                        }]);
+                    }
+                });
+                return false;
+            }
+            window.onload=function(){
+                setInterval(ajax,1000);
+            }*/
+    </script>
+{% endif %}
+
+
+{% if states.state == "I" %}
+<script>
+    //Display the most recent graph that was stopped
+    x_data = "{{xdata}}";
+    y_data = "{{ydata}}";
+    x_data = x_data.replace("[","");
+    x_data = x_data.replace("]","");
+    stringSplitXData = x_data.split(",");
+    actual_x_data = [];
+    y_data = y_data.replace("[","");
+    y_data = y_data.replace("]","");
+    stringSplitYData = y_data.split(",");
+    actual_y_data = [];
+    var i;
+    // var temp;
+    for(i = 0; i < stringSplitXData.length; i++){
+        actual_x_data.push(parseFloat(stringSplitXData[i]));
+        actual_y_data.push(parseFloat(stringSplitYData[i]));
+    }
+    Plotly.newPlot('traceGraph',[{
+        x:actual_x_data,
+        y:actual_y_data,
+        type:'line'
+    }], layout);
+</script>
+{% endif %}
+
+
+{% if states.state == "RO" %}
+    <script type="text/javascript">
+        //Displays the most recent graph, then goes to idle state
+        x_data = "{{xdata}}";
+        y_data = "{{ydata}}";
+        x_data = x_data.replace("[","");
+        x_data = x_data.replace("]","");
+        stringSplitXData = x_data.split(",");
+        actual_x_data = [];
+        y_data = y_data.replace("[","");
+        y_data = y_data.replace("]","");
+        stringSplitYData = y_data.split(",");
+        actual_y_data = [];
+        var i;
+        for(i = 0; i < stringSplitXData.length; i++){
+            actual_x_data.push(parseFloat(stringSplitXData[i]));
+            actual_y_data.push(parseFloat(stringSplitYData[i]));
+        }
+        Plotly.newPlot('traceGraph',[{
+            x:actual_x_data,
+            y:actual_y_data,
+            type:'line'
+        }], layout);
+        document.getElementById("#graphForm").submit();
+    </script>
+{% endif %}
+{% endblock content %}
