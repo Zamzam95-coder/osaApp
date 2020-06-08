@@ -2,7 +2,6 @@ beautifulsoup4==4.9.0
 bs4==0.0.1
 Django==3.0.5
 get==2019.4.13
-pipenv==2020.6.2
 post==2019.4.13
 pprint==0.1
 request==2019.4.13
