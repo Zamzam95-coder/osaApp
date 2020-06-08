@@ -1,0 +1,14 @@
+beautifulsoup4==4.9.0
+bs4==0.0.1
+Django==3.0.5
+get==2019.4.13
+pipenv==2020.6.2
+post==2019.4.13
+pprint==0.1
+request==2019.4.13
+requests==2.23.0
+urllib3==1.25.9
+virtualenv==20.0.18
+virtualenv-clone==0.5.4
+virtualenvwrapper-win==1.2.6
+wrapt==1.12.1
