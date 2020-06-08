@@ -5,10 +5,6 @@ from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from .models import Command, State
 
-#Import plotly graphing library
-from plotly.offline import plot
-import plotly.graph_objs as go
-
 #Web scraping libraries
 import requests
 import urllib.request
